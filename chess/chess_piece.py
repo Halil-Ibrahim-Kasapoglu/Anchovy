@@ -230,9 +230,9 @@ class ChessPiece:
 		en_passant_target = board.get_en_passant_target()
 		if en_passant_target is not None and self.y == 4:
 			if en_passant_target[0] == self.x - 1:
-				legal_moves.append(en_passant(self, self.x - 1, self.y + 1, en_passant_target[0], en_passant_target[1]))
+				legal_moves.append(en_passant(self, self.x - 1, self.y + 1, en_passant_target[0], 4))
 			elif en_passant_target[0] == self.x + 1:
-				legal_moves.append(en_passant(self, self.x + 1, self.y + 1, en_passant_target[0], en_passant_target[1]))
+				legal_moves.append(en_passant(self, self.x + 1, self.y + 1, en_passant_target[0], 4))
 
 		# last_move = board.get_last_move()
 		# if last_move is not None and last_move[0] == MoveCode.MOVE_CODE and self.y == 4:
@@ -276,9 +276,9 @@ class ChessPiece:
 		en_passant_target = board.get_en_passant_target()
 		if en_passant_target is not None and self.y == 3:
 			if en_passant_target[0] == self.x - 1:
-				legal_moves.append(en_passant(self, self.x - 1, self.y - 1, en_passant_target[0], en_passant_target[1]))
+				legal_moves.append(en_passant(self, self.x - 1, self.y - 1, en_passant_target[0], 3))
 			elif en_passant_target[0] == self.x + 1:
-				legal_moves.append(en_passant(self, self.x + 1, self.y - 1, en_passant_target[0], en_passant_target[1]))
+				legal_moves.append(en_passant(self, self.x + 1, self.y - 1, en_passant_target[0], 3))
 
 
 		# last_move = board.get_last_move()

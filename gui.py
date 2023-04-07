@@ -1,5 +1,6 @@
 import tkinter as tk
 import numpy as np
+from chess.chess_enums import MoveCode, PieceColor, PieceType
 
 GUI_CONFIG_ENGINE_TITLE = "Anchovy v0.1" 
 GUI_CONFIG_TILE_SIZE = 4
@@ -35,6 +36,8 @@ class GUI():
 		self.tile_views = []
 		self.highlighted_tile_views = []
 		
+		self.available_moves = {}
+
 		self.draw_board()
 		self.render_board()
 
@@ -89,7 +92,7 @@ class GUI():
 			self.render_board()
 
 		if event.char == 'n':
-			
+
 			self.highlight_move(self.board.get_retrieve_move())
 			self.board.retrieve_next_move()
 			self.render_board()
@@ -102,6 +105,15 @@ class GUI():
 		if event.char == 'q':
 			self.window.destroy()
 
+		if event.char == 'c':
+			print("Number of legal moves:", len(self.board.get_legal_moves(self.board.get_turn_color())))
+
+
+	def promote_move(self, move, promotion):
+		print("Promote baby")
+		move[7] = promotion
+		self.board.make_move(move)
+		self.promotion_window.destroy()
 
 	def tile_on_click(self, tile_id):
 		print("Tile Clicked : ", tile_id)
@@ -110,26 +122,60 @@ class GUI():
 		print("Board Coordinates : ", board_x, board_y)
 		print("Piece on tile : ", self.board.get_piece(board_x, board_y))
 
-		piece = self.board.get_piece(board_x, board_y)
-		if piece is not None and piece.color == self.board.get_turn_color():
-			legal_moves = piece.get_legal_moves(self.board)
-			for move in legal_moves:
-				target_square = move[5], move[6]
-				tile = self.board.board_width - target_square[1] - 1 + target_square[0] * self.board.board_width
-				highlighted_color = GUI_CONFIG_AVAILABLE_SQUARE_COLOR
-				self.board_canvas.itemconfig(self.tile_views[tile], fill=highlighted_color)
-				self.highlighted_tile_views += [tile]
+		if len(self.available_moves.keys()) != 0 and tile_id in self.available_moves.keys():
+			move = self.available_moves[tile_id]
+			if move[0] == MoveCode.PROMOTION_CODE:
+				# create 4 button for each promotion piece
+				self.promotion_window = tk.Toplevel(self.window)
+				self.promotion_window.title("Promote to")
+				self.promotion_window.geometry("100x200")
+				self.promotion_window.resizable(False, False)
 
-			# self.highlight_moves(s(piece))
+				queen_button = tk.Button(self.promotion_window, height=2, text="Queen", command=lambda: self.promote_move(move, PieceType.QUEEN))
+				queen_button.pack(fill=tk.X, expand=True)
+				rook_button = tk.Button(self.promotion_window, height=2, text="Rook", command=lambda: self.promote_move(move, PieceType.ROOK))
+				rook_button.pack(fill=tk.X, expand=True)
+				bishop_button = tk.Button(self.promotion_window, height=2, text="Bishop", command=lambda: self.promote_move(move, PieceType.BISHOP))
+				bishop_button.pack(fill=tk.X, expand=True)
+				knight_button = tk.Button(self.promotion_window, height=2, text="Knight", command=lambda: self.promote_move(move, PieceType.KNIGHT))
+				knight_button.pack(fill=tk.X, expand=True)
 
-		highlighted_color = GUI_CONFIG_HIGH_LIGHTED_WHITE_SQUARE_COLOR if (tile_id + tile_id // self.board.board_width) % 2 == 0 else GUI_CONFIG_HIGH_LIGHTED_DARK_SQUARE_COLOR
-		self.board_canvas.itemconfig(self.tile_views[tile_id], fill=highlighted_color)
-		self.highlighted_tile_views += [tile_id]
+				
 
 
+				#froze here until user click on a button
+				self.window.wait_window(self.promotion_window)
 
 
-		self.render_board()
+			
+			else:
+				self.board.make_move(move)
+			
+			self.highlight_move(self.board.get_last_move())
+			self.render_board()
+			self.available_moves = {}
+
+		else:
+			piece = self.board.get_piece(board_x, board_y)
+			if piece is not None and piece.color == self.board.get_turn_color():
+				legal_moves = piece.get_legal_moves(self.board)
+				for move in legal_moves:
+					target_square = move[5], move[6]
+					tile = self.board.board_width - target_square[1] - 1 + target_square[0] * self.board.board_width
+					highlighted_color = GUI_CONFIG_AVAILABLE_SQUARE_COLOR
+					self.board_canvas.itemconfig(self.tile_views[tile], fill=highlighted_color)
+					self.highlighted_tile_views += [tile]
+					
+					self.available_moves[tile] = move
+
+				# self.highlight_moves(s(piece))
+
+			highlighted_color = GUI_CONFIG_HIGH_LIGHTED_WHITE_SQUARE_COLOR if (tile_id + tile_id // self.board.board_width) % 2 == 0 else GUI_CONFIG_HIGH_LIGHTED_DARK_SQUARE_COLOR
+			self.board_canvas.itemconfig(self.tile_views[tile_id], fill=highlighted_color)
+			self.highlighted_tile_views += [tile_id]
+
+
+			self.render_board()
 
 	def handle_tile_clicks(self, event):
 		x,y = event.x, event.y

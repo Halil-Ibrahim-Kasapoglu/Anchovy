@@ -32,7 +32,7 @@ class ChessBoard():
 		self.removed_board_states = []
 		self.removed_move_history = []
 
-		fen.load_fen_to_board(self, "r3k2r/8/1p1p4/pPb2p1p/P2p1P1P/3P4/8/R3K2R w KQkq - 0 24")
+		fen.load_fen_to_board(self, "r2qkbnr/pP1bpppp/2n5/8/8/8/PPPP1PPP/RNBQKBNR w KQkq - 1 5")
 
 	def get_en_passant_target(self):
 		return self.en_passant_target
@@ -147,6 +147,7 @@ class ChessBoard():
 			# If piece is a pawn and moves two spaces, set en passant target
 			if piece.type == PieceType.PAWN and abs(target_y - piece_y) == 2:
 				self.en_passant_target = (target_x, (target_y + piece_y) // 2)
+				print("en passant target square ", self.en_passant_target)
 
 			# Swap places on board
 			self.board[piece_x][piece_y] = None
