@@ -41,30 +41,49 @@ class ChessPiece:
 			ascii_char -= 6
 		return chr(ascii_char)
 
-	def get_legal_moves(self, board):
+	def get_legal_moves(self, board, filter_check_moves = True):
 		# returns a list of legal moves for this piece on the given board
+		legal_moves = []
 		if self.type == PieceType.PAWN:
-			return self.get_legal_moves_pawn(board)
-		
+			legal_moves = self.get_legal_moves_pawn(board)
 		elif self.type == PieceType.KNIGHT:
-			return self.get_legal_moves_knight(board)
-
+			legal_moves = self.get_legal_moves_knight(board)
 		elif self.type == PieceType.BISHOP:
-			return self.get_legal_moves_bishop(board)
+			legal_moves = self.get_legal_moves_bishop(board)
 		elif self.type == PieceType.ROOK:
-			return self.get_legal_moves_rook(board)
+			legal_moves = self.get_legal_moves_rook(board)
 		elif self.type == PieceType.QUEEN:
-			return self.get_legal_moves_queen(board)
+			legal_moves = self.get_legal_moves_queen(board)
 		elif self.type == PieceType.KING:
-			return self.get_legal_moves_king(board)
+			legal_moves = self.get_legal_moves_king(board, filter_check_moves)
 		else:
 			raise Exception("Invalid piece type")
+
+		if filter_check_moves:
+			legal_moves = self.filter_check_moves(board, legal_moves, self.color)
+
+		return legal_moves
+
+	def filter_check_moves(self, board, moves, color):
+		
+		legal_moves = []
+
+		for move in moves:
+			new_board = board.get_state_after_move(move)
+			king = new_board.get_king(color)
+			if king == None:
+				continue
+			if new_board.is_square_attacked(king.x, king.y, color):
+				continue
+			legal_moves.append(move)
+		
+		return legal_moves
 
 
 	# =================================
 	# LEGAL KING MOVES
 	# =================================
-	def get_legal_moves_king(self, game_state):
+	def get_legal_moves_king(self, game_state, filter_check_moves = True):
 		# returns a list of legal moves for a king on the given board
 		legal_moves = []
 
@@ -81,17 +100,21 @@ class ChessPiece:
 		
 		if self.color == PieceColor.WHITE:
 			if game_state.white_can_castle_kingside:
-				if game_state.get_piece(5, 0) == None and game_state.get_piece(6, 0) == None:
+				if game_state.get_piece(5, 0) == None and game_state.get_piece(6, 0) == None and\
+					(not filter_check_moves or game_state.is_square_attacked(5, 0, PieceColor.WHITE) == False):
 					legal_moves.append(castle(self, 6, 0, game_state.get_piece(7, 0), 5, 0))
 			if game_state.white_can_castle_queenside:
-				if game_state.get_piece(3, 0) == None and game_state.get_piece(2, 0) == None and game_state.get_piece(1, 0) == None:
+				if game_state.get_piece(3, 0) == None and game_state.get_piece(2, 0) == None and game_state.get_piece(1, 0) == None and\
+					(not filter_check_moves or game_state.is_square_attacked(3, 0, PieceColor.WHITE) == False):
 					legal_moves.append(castle(self, 2, 0, game_state.get_piece(0, 0), 3, 0))
 		else:
 			if game_state.black_can_castle_kingside:
-				if game_state.get_piece(5, 7) == None and game_state.get_piece(6, 7) == None:
+				if game_state.get_piece(5, 7) == None and game_state.get_piece(6, 7) == None and\
+					(not filter_check_moves or game_state.is_square_attacked(5, 7, PieceColor.BLACK) == False):
 					legal_moves.append(castle(self, 6, 7, game_state.get_piece(7, 7), 5, 7))
 			if game_state.black_can_castle_queenside:
-				if game_state.get_piece(3, 7) == None and game_state.get_piece(2, 7) == None and game_state.get_piece(1, 7) == None:
+				if game_state.get_piece(3, 7) == None and game_state.get_piece(2, 7) == None and\
+					(not filter_check_moves or game_state.is_square_attacked(3, 7, PieceColor.BLACK) == False):
 					legal_moves.append(castle(self, 2, 7, game_state.get_piece(0, 7), 3, 7))
 
 		return legal_moves
@@ -234,15 +257,6 @@ class ChessPiece:
 			elif en_passant_target[0] == self.x + 1:
 				legal_moves.append(en_passant(self, self.x + 1, self.y + 1, en_passant_target[0], 4))
 
-		# last_move = board.get_last_move()
-		# if last_move is not None and last_move[0] == MoveCode.MOVE_CODE and self.y == 4:
-		# 	last_moved_color, last_moved_type, last_moved_from_x, last_moved_from_y, last_moved_to_x, last_moved_to_y = last_move[1:7]
-		# 	if last_moved_type == PieceType.PAWN and last_moved_color == PieceColor.BLACK and last_moved_to_y == 4 and last_moved_from_y == 6:
-		# 		if last_moved_to_x == self.x - 1:
-		# 			legal_moves.append(en_passant(self, self.x - 1, self.y + 1, last_moved_to_x, last_moved_to_y))
-		# 		elif last_moved_to_x == self.x + 1:
-		# 			legal_moves.append(en_passant(self, self.x + 1, self.y + 1, last_moved_to_x, last_moved_to_y))
-
 		return legal_moves
 
 	def get_legal_moves_pawn_black(self, board):
@@ -279,16 +293,6 @@ class ChessPiece:
 				legal_moves.append(en_passant(self, self.x - 1, self.y - 1, en_passant_target[0], 3))
 			elif en_passant_target[0] == self.x + 1:
 				legal_moves.append(en_passant(self, self.x + 1, self.y - 1, en_passant_target[0], 3))
-
-
-		# last_move = board.get_last_move()
-		# if last_move is not None and last_move[0] == MoveCode.MOVE_CODE and self.y == 3:
-		# 	last_moved_color, last_moved_type, last_moved_from_x, last_moved_from_y, last_moved_to_x, last_moved_to_y = last_move[1:7]
-		# 	if last_moved_type == PieceType.PAWN and last_moved_color == PieceColor.WHITE and last_moved_to_y == 3 and last_moved_from_y == 1:
-		# 		if last_moved_to_x == self.x - 1:
-		# 			legal_moves.append(en_passant(self, self.x - 1, self.y - 1, last_moved_to_x, last_moved_to_y))
-		# 		elif last_moved_to_x == self.x + 1:
-		# 			legal_moves.append(en_passant(self, self.x + 1, self.y - 1, last_moved_to_x, last_moved_to_y))
 
 		return legal_moves
 

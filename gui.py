@@ -70,16 +70,13 @@ class GUI():
 			self.clear_highlighted_tiles()
 
 	def on_key_press(self, event):
-		print("Key Pressed", event.char)
-
+		
 		if event.char == "r":
 			legal_moves = self.board.get_legal_moves(self.board.get_turn_color())
 			
 			if len(legal_moves) == 0:
 				raise Exception("No legal moves")
 			random_move = legal_moves[np.random.randint(len(legal_moves))]
-			
-			print("Move Played : ", random_move)
 
 			self.board.make_move(random_move)
 			self.highlight_move(self.board.get_last_move())
@@ -110,17 +107,12 @@ class GUI():
 
 
 	def promote_move(self, move, promotion):
-		print("Promote baby")
 		move[7] = promotion
 		self.board.make_move(move)
 		self.promotion_window.destroy()
 
 	def tile_on_click(self, tile_id):
-		print("Tile Clicked : ", tile_id)
-		
 		board_x, board_y = tile_id // self.board.board_width, self.board.board_height - tile_id % self.board.board_width - 1
-		print("Board Coordinates : ", board_x, board_y)
-		print("Piece on tile : ", self.board.get_piece(board_x, board_y))
 
 		if len(self.available_moves.keys()) != 0 and tile_id in self.available_moves.keys():
 			move = self.available_moves[tile_id]
@@ -140,14 +132,9 @@ class GUI():
 				knight_button = tk.Button(self.promotion_window, height=2, text="Knight", command=lambda: self.promote_move(move, PieceType.KNIGHT))
 				knight_button.pack(fill=tk.X, expand=True)
 
-				
-
-
 				#froze here until user click on a button
 				self.window.wait_window(self.promotion_window)
-
-
-			
+				
 			else:
 				self.board.make_move(move)
 			

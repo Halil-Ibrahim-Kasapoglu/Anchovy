@@ -34,6 +34,31 @@ class ChessBoard():
 
 		fen.load_fen_to_board(self, "r2qkbnr/pP1bpppp/2n5/8/8/8/PPPP1PPP/RNBQKBNR w KQkq - 1 5")
 
+	# Returns a boolean indicating whether the square at (x,y) with the given color is attacked by an enemy piece
+	def is_square_attacked(self, x, y, color):
+
+		enemy_pieces = []
+		for i in range(self.board_width):
+			for j in range(self.board_height):
+				if self.board[i][j] == None:
+					continue
+				
+				if self.board[i][j].color != color:
+					enemy_pieces.append(self.board[i][j])
+
+		for piece in enemy_pieces:
+			moves = piece.get_legal_moves(self, False)
+			for move in moves:
+				target_x, target_y = move[5], move[6]
+				if target_x == x and target_y == y:
+					return True
+		return False
+
+	def get_state_after_move(self, move):
+		new_board = copy.deepcopy(self)
+		new_board.make_move(move)
+		return new_board
+
 	def get_en_passant_target(self):
 		return self.en_passant_target
 
@@ -45,7 +70,6 @@ class ChessBoard():
 
 	def get_turn_color(self):
 		return PieceColor.WHITE if self.round % 2 == 0 else PieceColor.BLACK
-
 
 	def get_piece(self, x, y):
 		if x < 0 or x >= self.board_width or y < 0 or y >= self.board_height:
@@ -66,6 +90,17 @@ class ChessBoard():
 					legal_moves += moves # self.board[i][j].get_legal_moves(self)
 
 		return legal_moves
+
+
+	def get_king(self, color):
+		for i in range(self.board_width):
+			for j in range(self.board_height):
+				if self.board[i][j] == None:
+					continue
+				
+				if self.board[i][j].color == color and self.board[i][j].type == PieceType.KING:
+					return self.board[i][j]
+		return None
 
 	def undo_last_move(self):
 		if len(self.move_history) == 0:
@@ -147,17 +182,13 @@ class ChessBoard():
 			# If piece is a pawn and moves two spaces, set en passant target
 			if piece.type == PieceType.PAWN and abs(target_y - piece_y) == 2:
 				self.en_passant_target = (target_x, (target_y + piece_y) // 2)
-				print("en passant target square ", self.en_passant_target)
 
 			# Swap places on board
 			self.board[piece_x][piece_y] = None
 			piece.x = target_x
 			piece.y = target_y
 			self.board[target_x][target_y] = piece
-			
-			print(f"Move {self.get_coordinate_string(piece_x,piece_y)} to {self.get_coordinate_string(target_x,target_y)}")
-			
-
+		
 		elif move_code == MoveCode.CAPTURE_CODE:
 
 			piece_x,piece_y,target_x,target_y = move[3:7]
@@ -173,8 +204,6 @@ class ChessBoard():
 			piece.x = target_x
 			piece.y = target_y
 			self.board[target_x][target_y] = piece
-
-			print(f"Capture {self.get_coordinate_string(piece_x,piece_y)} to {self.get_coordinate_string(target_x,target_y)}")
 			
 		elif move_code == MoveCode.PROMOTION_CODE:
 
@@ -189,8 +218,6 @@ class ChessBoard():
 
 			promoted_piece = ChessPiece(piece.color, promotion_type, target_x, target_y)
 			self.board[target_x][target_y] = promoted_piece
-
-			print(f"Promote {self.get_coordinate_string(piece_x,piece_y)} to {self.get_coordinate_string(target_x,target_y)} to {promotion_type}")
 
 		elif move_code == MoveCode.EN_PASSANT_CODE:
 
@@ -211,8 +238,6 @@ class ChessBoard():
 			piece.x = target_x
 			piece.y = target_y
 			self.board[target_x][target_y] = piece
-
-			print(f"En passant {self.get_coordinate_string(piece_x,piece_y)} to {self.get_coordinate_string(target_x,target_y)} and captured {self.get_coordinate_string(capture_x,capture_y)}")
 		
 		elif move_code == MoveCode.CASTLE_CODE:
 
@@ -239,8 +264,6 @@ class ChessBoard():
 			rook.y = rook_target_y
 			self.board[target_x][target_y] = piece
 			self.board[rook_target_x][rook_target_y] = rook
-
-			print(f"Castle {self.get_coordinate_string(piece_x,piece_y)} to {self.get_coordinate_string(target_x,target_y)} and {self.get_coordinate_string(rook_x,rook_y)} to {self.get_coordinate_string(rook_target_x,rook_target_y)}")
 
 		# Update board stats
 		self.update_castle_rights()
